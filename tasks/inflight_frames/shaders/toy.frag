@@ -361,7 +361,7 @@ vec3 skybox_color(in vec3 direction) {
 
 vec2 SimulateHardWork() {
     vec2 a = vec2(0.0);
-    for (int i = 0; i < 400000; i++) {
+    for (int i = 0; i < 40000; i++) {
         if (i % 3 == 1) {
             a.x += 1.0 * i / 1000.0;
         } else {
