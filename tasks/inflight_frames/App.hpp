@@ -1,5 +1,6 @@
 #pragma once
 
+#include <etna/Buffer.hpp>
 #include <etna/Window.hpp>
 #include <etna/PerFrameCmdMgr.hpp>
 #include <etna/ComputePipeline.hpp>
@@ -26,10 +27,10 @@ private:
   void drawFrame();
 
 private:
-  const static constexpr size_t kFlamesInFlight = 4;
+  const static constexpr size_t numFramesInFlight = 3;
 
   struct {
-    etna::Buffer buf[kFlamesInFlight];
+    etna::Buffer buf[numFramesInFlight];
     size_t counter{0};
   } flameBuffer;
   bool isFileTextureInit{false};

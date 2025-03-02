@@ -28,7 +28,7 @@ struct Params
 
 App::App()
   : resolution{1280, 720}
-  , useVsync{true}
+  , useVsync{false}
 {
   // First, we need to initialize Vulkan, which is not trivial because
   // extensions are required for just about anything.
@@ -56,7 +56,7 @@ App::App()
       .deviceExtensions = deviceExtensions,
       // Replace with an index if etna detects your preferred GPU incorrectly
       .physicalDeviceIndexOverride = {},
-      .numFramesInFlight = 1,
+      .numFramesInFlight = numFramesInFlight,
     });
   }
 
@@ -111,7 +111,7 @@ App::App()
 
   sampler = etna::Sampler(etna::Sampler::CreateInfo{.filter = vk::Filter::eLinear, .addressMode = vk::SamplerAddressMode::eRepeat, .name = "sampler_shadertoy2"});
 
-  for (size_t i = 0; i < kFlamesInFlight; ++i) {
+  for (size_t i = 0; i < numFramesInFlight; ++i) {
     flameBuffer.buf[i] = etna::get_context().createBuffer(etna::Buffer::CreateInfo{.size = sizeof(flameBuffer), .bufferUsage = vk::BufferUsageFlagBits::eUniformBuffer, .memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY,  .name = "flamesBuffer"});
   
     flameBuffer.buf[i].map();
@@ -262,6 +262,11 @@ void App::drawFrame()
       etna::flush_barriers(currentCmdBuf);
 
       {
+        ZoneScopedN("SimulateHardWork");
+        std::this_thread::sleep_for(std::chrono::milliseconds(42));
+      }
+
+      {
         ETNA_PROFILE_GPU(currentCmdBuf, "Shader");
 
         etna::RenderTargetState state{currentCmdBuf, {{}, {resolution.x, resolution.y}}, {{backbuffer, backbufferView}}, {}};
@@ -273,7 +278,7 @@ void App::drawFrame()
         const auto set = etna::create_descriptor_set(info.getDescriptorLayoutId(0), currentCmdBuf, {etna::Binding{0, bufImage.genBinding(sampler.get(), vk::ImageLayout::eShaderReadOnlyOptimal)}, etna::Binding{1, grafImage.genBinding(sampler.get(), vk::ImageLayout::eShaderReadOnlyOptimal)}, etna::Binding{2, flameBuffer.buf[flameBuffer.counter].genBinding()}});
       
         ++flameBuffer.counter;
-        flameBuffer.counter %= kFlamesInFlight;
+        flameBuffer.counter %= numFramesInFlight;
 
         vk::DescriptorSet vkSet = set.getVkSet();
 
@@ -298,6 +303,7 @@ void App::drawFrame()
         vk::ImageAspectFlagBits::eColor);
       // And of course flush the layout transition.
       etna::flush_barriers(currentCmdBuf);
+      ETNA_READ_BACK_GPU_PROFILING(currentCmdBuf);
     }
     ETNA_CHECK_VK_RESULT(currentCmdBuf.end());
 

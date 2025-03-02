@@ -359,14 +359,21 @@ vec3 skybox_color(in vec3 direction) {
     return vec3(cos(sum*1.0+cos(iTime*1.0))*.5+.5, cos(sum*1.0+cos(iTime*2.0))*.5+.5, cos(sum*1.0+cos(iTime*3.0))*.5+.5);
 }
 
+vec2 SimulateHardWork() {
+    vec2 a = vec2(0.0);
+    for (int i = 0; i < 400000; i++) {
+        if (i % 3 == 1) {
+            a.x += 1.0 * i / 1000.0;
+        } else {
+            a.y -= 1.0 * i / 1000.0;
+        }
+    }
+    return a;
+}
+
 void main()
 {
   iMouse = vec2(params_t.mouse_x, params_t.mouse_y);
-
-  if (length(gl_FragCoord.xy - params.mousePos) < 9.0) {
-    out_fragColor = vec4(0.0, 0.0, 0.0, 1.0);
-    return;
-  }
 
   iResolution = vec2(params_t.resolution_x, params_t.resolution_y);
   iTime = params_t.time;
@@ -393,6 +400,11 @@ void main()
 	
     color = cookTorrance ( p, n, l, v, m );
   } 
+  vec2 res_of_load = SimulateHardWork();
+  res_of_load.x *= 1.0 / 100000000.0;
+  res_of_load.y *= 1.1 / 100000000.0;
+  
+  color.xy += res_of_load;
 
   out_fragColor = color;
 
